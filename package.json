@@ -1,0 +1,36 @@
+{
+  "name": "gulam-chor",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A nostalgic Indian courtyard card game — a playable Gulam Chor preview.",
+  "scripts": {
+    "predev": "npm run art:sync",
+    "dev": "next dev --webpack",
+    "prebuild": "npm run art:sync",
+    "build": "next build --webpack",
+    "start": "next start",
+    "lint": "eslint . --max-warnings=0",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test src/lib/game.test.ts",
+    "art:sync": "node scripts/sync-art.mjs"
+  },
+  "engines": { "node": "22.x" },
+  "dependencies": {
+    "@fontsource/hind": "^5.2.7",
+    "@fontsource/yatra-one": "^5.2.7",
+    "next": "16.4.5",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "4.3.4",
+    "@types/node": "^22",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.5",
+    "tailwindcss": "4.3.4",
+    "tsx": "^4.20.0",
+    "typescript": "^5.9.0"
+  }
+}

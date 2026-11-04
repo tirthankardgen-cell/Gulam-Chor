@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "style": "Original nostalgic Indian neighbourhood gouache illustration; golden hour, earth pigments, visible brush texture. See README.md and prompts/.",
+  "assets": [
+    { "id": "hero-desktop", "output": "public/art/generated/hero-desktop.webp", "size": "2560x1440", "prompt": "prompts/01-hero-desktop.md", "use": "Full-screen landing background above 700px" },
+    { "id": "hero-mobile", "output": "public/art/generated/hero-mobile.webp", "size": "1024x1792", "prompt": "prompts/02-hero-mobile.md", "use": "Recomposed portrait landing background" },
+    { "id": "game-desktop", "output": "public/art/generated/game-desktop.webp", "size": "2560x1440", "prompt": "prompts/03-game-desktop.md", "use": "Courtyard surrounding the interactive table" },
+    { "id": "game-mobile", "output": "public/art/generated/game-mobile.webp", "size": "1024x1792", "prompt": "prompts/04-game-mobile.md", "use": "Portrait game environment" },
+    { "id": "table-cloth", "output": "public/art/generated/table-cloth.webp", "size": "1024x1024", "prompt": "prompts/05-table-cloth.md", "use": "Subtle tileable cotton table surface" },
+    { "id": "card-back", "output": "public/art/generated/card-back.webp", "size": "768x1152", "prompt": "prompts/06-card-back.md", "use": "One identical back for every hidden card" },
+    { "id": "jack", "output": "public/art/generated/jack.webp", "size": "1024x1536", "prompt": "prompts/07-jack.md", "use": "Jack portrait inside programmatically labelled card faces" },
+    { "id": "you", "output": "public/art/generated/you.webp", "size": "1024x1024", "prompt": "prompts/08-you.md", "use": "Local player avatar" },
+    { "id": "dadi", "output": "public/art/generated/dadi.webp", "size": "1024x1024", "prompt": "prompts/09-dadi.md", "use": "Dadi companion portrait" },
+    { "id": "meera", "output": "public/art/generated/meera.webp", "size": "1024x1024", "prompt": "prompts/10-meera.md", "use": "Meera companion portrait" },
+    { "id": "raju", "output": "public/art/generated/raju.webp", "size": "1024x1024", "prompt": "prompts/11-raju.md", "use": "Raju companion portrait" },
+    { "id": "amma", "output": "public/art/generated/amma.webp", "size": "1024x1024", "prompt": "prompts/12-amma.md", "use": "Amma companion portrait" },
+    { "id": "kabir", "output": "public/art/generated/kabir.webp", "size": "1024x1024", "prompt": "prompts/13-kabir.md", "use": "Kabir companion portrait" },
+    { "id": "logo", "output": "public/art/generated/logo.png", "size": "1024x1024", "prompt": "prompts/14-logo.md", "use": "Transparent brand emblem beside the live-text wordmark" },
+    { "id": "favicon", "output": "public/art/generated/favicon.png", "size": "1024x1024", "prompt": "prompts/15-favicon.md", "use": "Simplified browser and touch icon" }
+  ]
+}
