@@ -35,6 +35,10 @@ Verified on **6 November 2026**, using Node 22, Firebase emulators, live Firebas
 - The cleanup Scheduler job is **ENABLED**, runs every 24 hours, and its Cloud Run endpoint is private.
 - Artifact Registry's cleanup policy removes deployment images after **86400 seconds (one day)**. The policy was set and read back after the initial deployment reported it missing.
 
-## Deployment boundary
+## Public deployment
 
-Browser checks used the production build locally with the **live Firebase backend**. Vercel needs the values from .env.example / [DEPLOYMENT.md](DEPLOYMENT.md) and a deployment from the updated main branch. These public values are embedded at build time, so adding them requires a redeploy. Application code cannot guarantee search-engine indexing or staying within shared Blaze free allowances.
+The implementation was pushed to main as e2de9ee. Vercel deployed successfully, and every step of [GitHub's check suite](https://github.com/tirthankardgen-cell/Gulam-Chor/actions/runs/42199227669) passed, including the Firebase emulator integration suite.
+
+The public domain **https://gulamchor.vihar.online** serves the updated pages, robots file, and weekly sitemap. Two independent browsers completed a full round directly on this domain, displayed the single-Jack result, started a rematch, returned to the lobby, and left the test room. The other browser checks above used a local production build with the same live Firebase backend.
+
+The copy-paste Vercel values are in .env.example / [DEPLOYMENT.md](DEPLOYMENT.md). They are embedded at build time, so changing them requires a redeploy. Application code cannot guarantee search-engine indexing or staying within shared Blaze free allowances.
