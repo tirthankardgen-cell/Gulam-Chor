@@ -1,4 +1,4 @@
-name: Preview checks
+name: Multiplayer checks
 
 on:
   push:
@@ -18,7 +18,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - run: npm ci --prefix functions
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "21"
       - run: npm test
       - run: npm run lint
       - run: npm run build
       - run: npm run typecheck
+      - run: npm --prefix functions run build
+      - run: npx firebase emulators:exec --project demo-gulam-chor --only auth,database,functions "npm run test:integration"

@@ -1,7 +1,6 @@
 /**
- * Local preview engine. Every move follows the specification's house rules.
- * This is NOT an authoritative multiplayer server: bot hands live in memory.
- * Keep this pure module when moving authority to Firebase Cloud Functions.
+ * Pure Gulam Chor rules, executed authoritatively by Firebase Cloud Functions.
+ * The browser receives only the public projection and its own private hand.
  */
 export const RANKS = ["A", "2", "3", "4", "5", "6", "7", "8", "9", "10", "J", "Q", "K"] as const;
 export const SUITS = ["S", "H", "D", "C"] as const;

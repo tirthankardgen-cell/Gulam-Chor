@@ -1,0 +1,20 @@
+{
+  "rules": {
+    ".read": false,
+    ".write": false,
+    "rooms": {
+      ".indexOn": ["expiresAt"],
+      "$code": {
+        "public": {
+          ".read": "auth != null && root.child('rooms').child($code).child('members').child(auth.uid).val() == true && root.child('rooms').child($code).child('expiresAt').val() > now"
+        },
+        "hands": {
+          "$uid": {
+            ".read": "auth != null && auth.uid == $uid && root.child('rooms').child($code).child('members').child(auth.uid).val() == true && root.child('rooms').child($code).child('expiresAt').val() > now"
+          }
+        }
+      }
+    },
+    "owners": { ".indexOn": ["expiresAt"] }
+  }
+}

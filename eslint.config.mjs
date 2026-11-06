@@ -6,5 +6,5 @@ export default defineConfig([
   ...nextVitals,
   ...nextTs,
   { rules: { "@next/next/no-img-element": "off" } },
-  globalIgnores([".next/**", "out/**", "output/**", ".playwright-cli/**", "next-env.d.ts"]),
+  globalIgnores([".next/**", "out/**", "output/**", "functions/lib/**", ".playwright-cli/**", "next-env.d.ts"]),
 ]);
