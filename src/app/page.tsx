@@ -4,13 +4,14 @@ import { Brand } from "@/components/brand";
 import { Icon } from "@/components/icon";
 import { Scene } from "@/components/scene";
 import { SITE_DESCRIPTION, SITE_URL } from "@/lib/site";
+import { SHARE_IMAGE } from "@/lib/seo";
 
 export const metadata: Metadata = { alternates: { canonical: "/" } };
 
 export default function Home() {
   return (
     <div className="landing">
-      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "Game", name: "Gulam Chor", alternateName: "गुलाम चोर", url: SITE_URL, description: SITE_DESCRIPTION, numberOfPlayers: { "@type": "QuantitativeValue", minValue: 2, maxValue: 6 }, isAccessibleForFree: true, inLanguage: ["en", "hi"] }).replace(/</g, "\\u003c") }} />
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify({ "@context": "https://schema.org", "@type": "Game", name: "Gulam Chor", alternateName: "गुलाम चोर", url: SITE_URL, description: SITE_DESCRIPTION, image: SHARE_IMAGE.url, numberOfPlayers: { "@type": "QuantitativeValue", minValue: 2, maxValue: 6 }, isAccessibleForFree: true, inLanguage: ["en", "hi"] }).replace(/</g, "\\u003c") }} />
       <Scene />
       <header className="landing-header">
         <Brand />

@@ -72,4 +72,8 @@ Free allowances are shared with the relevant project or billing account. Instanc
 
 ## SEO
 
-Canonical site: `https://gulamchor.vihar.online`. Landing and rules pages are indexable. Private play URLs have `noindex,follow` and are excluded from the sitemap. The sitemap uses `changefreq=weekly` and a **604800-second (one-week)** revalidation interval. This is crawler guidance, not a guaranteed Google refresh time. Update the `lastModified` dates when pages materially change. Submit `/sitemap.xml` to your site's Search Console when ready.
+Canonical site: `https://gulamchor.vihar.online`. Landing and rules pages are indexable. Private play URLs have `noindex,follow` and are excluded from the sitemap.
+
+The sitemap **updates daily**, uses `changefreq=daily` and **priority 1.0** for both the homepage and `/how-to-play`, and revalidates every **86400 seconds (one day)**. The robots policy also refreshes daily and allows crawlers to reach pages, images, favicons, and icons. These are crawler hints, not guaranteed crawl times or search rankings. Update `SITE_UPDATED_AT` in `src/lib/site.ts` when page content materially changes; daily regeneration does not fabricate a new content-edit date. Submit `/sitemap.xml` to your site's Search Console when ready.
+
+`npm run build` automatically scans `public/` into `src/lib/sitemap-images.json`; the sitemap bundles this inventory so every public image (including generated artwork, favicon files, and app icons) appears without runtime filesystem access. Run `npm run seo:sync` to refresh it manually. `npm run seo:assets` regenerates the committed 1200×630 share JPEG, 16/32/48-pixel favicon variants, 180-pixel Apple icon, 192/512-pixel app icons, and maskable icon. `/manifest.webmanifest` advertises app icons. Each page supplies its own Open Graph and Twitter title, description, canonical share URL, and image metadata.

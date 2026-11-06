@@ -42,7 +42,9 @@ All shuffles, deals, draws, seat changes, and results run in a callable Firebase
 
 Realtime listeners subscribe to the public table, the current player's private hand, and transient card-selection feedback. Database rules allow only the current drawing player to publish a valid slot for that revision; a draw clears it atomically. Hover feedback does not call a Cloud Function or change hand order. Functions scale to zero, with a two-instance maximum. A bounded daily job clears expired rooms. These controls reduce cost, but Blaze billing is usage-based and cannot guarantee a zero bill.
 
-The landing and rules pages have canonical URLs, social previews, and structured game metadata. `/sitemap.xml` advertises **weekly** changes and revalidates after **604800 seconds (one week)**. `/robots.txt` permits crawling. Private play pages use `noindex,follow` and are excluded from the sitemap. Search engines decide when to crawl and index.
+The landing, rules, and play pages have their own titles, descriptions, canonical URLs, and Open Graph/Twitter previews. A 1200×630 JPEG supplies share artwork; browser favicons, an Apple touch icon, and regular/maskable app icons are included. `/sitemap.xml` **updates daily** (86400-second revalidation), advertises **daily** changes, gives both the homepage and rules page **priority 1.0**, and includes every public image, favicon, and icon. `/robots.txt` permits crawling and refreshes daily. Private play pages use `noindex,follow` and are excluded from the sitemap. Search engines decide when to crawl and index.
+
+The image inventory refreshes automatically before development and production builds. Run `npm run seo:sync` after adding public images, or `npm run seo:assets` to regenerate the favicon/icon set and share JPEG from the original artwork. Update `SITE_UPDATED_AT` in `src/lib/site.ts` when public page content materially changes.
 
 ## Artwork and project notes
 

@@ -2,12 +2,13 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Brand } from "@/components/brand";
 import { Scene } from "@/components/scene";
+import { pageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "How to Play — Rules for 2–6 Players",
-  description: "Learn the Gulam Chor rules: remove one Jack, deal 51 cards, discard matching pairs, and draw from your neighbour. Play online with 2, 3, 4, 5, or 6 players.",
-  alternates: { canonical: "/how-to-play" },
-};
+export const metadata: Metadata = pageMetadata(
+  "/how-to-play",
+  "How to Play Gulam Chor — Rules for 2–6 Players",
+  "Learn the Gulam Chor rules: remove one Jack, deal 51 cards, discard matching pairs, and draw from your neighbour. Play online with 2, 3, 4, 5, or 6 players.",
+);
 
 export default function HowToPlay() {
   return <div className="room-shell">

@@ -1,5 +1,15 @@
 # Multiplayer verification
 
+## SEO, sitemap, and sharing update — 7 November 2026
+
+- The optimized Next.js build, ESLint, and TypeScript checks passed with Node 22.
+- Verified the built site's HTTP responses using a Facebook crawler user agent: `/`, `/how-to-play`, `/play`, and an invite URL each return the correct title, description, canonical URL, page-specific Open Graph/Twitter metadata, and icon links in the HTML head.
+- `/sitemap.xml` includes both public pages at **priority 1.0** with **daily** change hints. Its image URLs exactly cover all **22 public images**, including favicons, icons, original SVG art, and both share images. Every listed image returned HTTP 200 with an image content type.
+- The production prerender manifest confirms **86400-second (daily)** regeneration for both `/sitemap.xml` and `/robots.txt`. The sitemap uses the actual content revision date, and robots permits crawling and advertises the sitemap.
+- Validated the ICO's 16/32/48-pixel variants, 180×180 Apple PNG, 192/512-pixel app icons, maskable icon, and web manifest against their actual files. The new Open Graph JPEG is 1200×630 and was visually inspected alongside the icon artwork.
+- Public pages permit indexing and large image previews. Private room/play URLs remain `noindex,follow` for both general crawlers and Googlebot and are absent from the sitemap.
+- The image inventory regenerates before development/production builds. Verification scripts are in ignored `output/seo/`; generated public assets and the inventory are committed with the implementation.
+
 ## Laptop layout and card interaction update — 6 November 2026
 
 This update is verified locally; the deployment evidence below describes the earlier release.

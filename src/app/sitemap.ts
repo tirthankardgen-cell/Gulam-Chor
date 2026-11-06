@@ -1,12 +1,14 @@
 import type { MetadataRoute } from "next";
-import { SITE_URL } from "@/lib/site";
+import { SITE_UPDATED_AT, SITE_URL } from "@/lib/site";
+import images from "@/lib/sitemap-images.json";
 
-// One week. changeFrequency is a crawler hint, not a guaranteed crawl schedule.
-export const revalidate = 604800;
+// Updates daily. Crawlers decide their own crawl schedule and ranking.
+export const revalidate = 86400;
 
 export default function sitemap(): MetadataRoute.Sitemap {
   return [
-    { url: SITE_URL, lastModified: new Date("2026-11-06T00:00:00Z"), changeFrequency: "weekly", priority: 1 },
-    { url: `${SITE_URL}/how-to-play`, lastModified: new Date("2026-11-06T00:00:00Z"), changeFrequency: "weekly", priority: 0.8 },
+    { url: SITE_URL, lastModified: SITE_UPDATED_AT, changeFrequency: "daily", priority: 1, images: images.map((path) => `${SITE_URL}${path}`) },
+    { url: `${SITE_URL}/how-to-play`, lastModified: SITE_UPDATED_AT, changeFrequency: "daily", priority: 1,
+      images: ["/og-gulam-chor.jpg", "/art/studies/logo.svg", "/art/studies/courtyard.svg", "/art/studies/card-back.svg", "/art/studies/jack.svg"].map((path) => `${SITE_URL}${path}`) },
   ];
 }
