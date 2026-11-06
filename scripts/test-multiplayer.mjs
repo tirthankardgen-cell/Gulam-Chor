@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { setTimeout as delay } from "node:timers/promises";
 import { initializeApp, deleteApp } from "firebase/app";
 import { getAuth, connectAuthEmulator, signInAnonymously, deleteUser } from "firebase/auth";
-import { getDatabase, connectDatabaseEmulator, get, ref, onValue } from "firebase/database";
+import { getDatabase, connectDatabaseEmulator, get, ref, onValue, set, serverTimestamp } from "firebase/database";
 import { getFunctions, connectFunctionsEmulator, httpsCallable } from "firebase/functions";
 
 const live = process.argv.includes("--live");
@@ -96,17 +96,37 @@ try {
     }
     assert.equal((await players[1].call({ action: "join", code })).code, code, "An existing identity reconnects during play");
     await assert.rejects(outsider.call({ action: "join", code, name: "Late", avatar: "you" }), /started/);
-    await delay(Math.max(0, view.startedAt + 3250 - Date.now()));
+    await delay(Math.max(0, view.turnDeadline - 60_000 + 75 - Date.now()));
     if (view.game.status === "playing") {
       const wrong = players.slice(0, count).find(p => p !== seats.get(view.game.actor));
       await assert.rejects(wrong.call({ action: "draw", code, revision: view.revision, slot: 0 }), /turn/i);
       await assert.rejects(host.call({ action: "nudge", code, revision: view.revision }), /moment/i);
       const actor = seats.get(view.game.actor);
+      const selectionRef = ref(actor.db, `rooms/${code}/selection`);
+      const preview = { revision: view.revision, slot: 0, updatedAt: serverTimestamp() };
+      await assert.rejects(set(ref(wrong.db, `rooms/${code}/selection`), preview), /denied/i);
+      await assert.rejects(set(selectionRef, { ...preview, slot: view.game.slotCount }), /denied/i);
+      await assert.rejects(set(selectionRef, { ...preview, slot: 0.5 }), /denied/i);
+      await assert.rejects(set(selectionRef, { ...preview, revision: view.revision - 1 }), /denied/i);
+      await assert.rejects(set(selectionRef, { ...preview, card: "JS" }), /denied/i);
+      await denied(outsider, `rooms/${code}/selection`);
+      await denied(actor, `rooms/${code}/drawAccess`);
+      await set(selectionRef, preview);
+      const targetPlayer = seats.get(view.game.target);
+      const selection = (await get(ref(targetPlayer.db, `rooms/${code}/selection`))).val();
+      assert.equal(selection.slot, 0, "The hand owner sees the actor's touched slot");
+      const targetHand = await read(targetPlayer, code, `hands/${targetPlayer.auth.currentUser.uid}`);
+      assert.deepEqual(targetHand.offeredCardIds, targetHand.cards.map(card => card.id).reverse());
+      await set(selectionRef, null);
+      assert.equal((await get(ref(targetPlayer.db, `rooms/${code}/selection`))).exists(), false);
+      await set(selectionRef, preview);
       const commands = await Promise.allSettled([0, 1].map(() => actor.call({ action: "draw", code, revision: view.revision, slot: 0 })));
       assert.equal(commands.filter(r => r.status === "fulfilled").length, 1, "A duplicate draw commits once");
       const previous = view.revision;
       await waitUntil(() => observed.get(host).revision > previous, "first move arrives");
       view = observed.get(host);
+      assert.equal((await get(ref(host.db, `rooms/${code}/selection`))).exists(), false, "A move clears the old preview");
+      await assert.rejects(set(selectionRef, preview), /denied/i);
     }
     let turns = 0;
     while (view.game.status === "playing") {

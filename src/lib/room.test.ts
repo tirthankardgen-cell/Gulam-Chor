@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { assertIntegrity, FAMILY, type Random } from "./game";
+import { CARD_FLIGHT_DURATION, CARD_INTERVAL, DEAL_START, PAIR_START, SHUFFLE_DURATION, dealStage, dealtCardCount } from "./deal";
 import { changeRoom, createRoom, DEAL_DURATION, profile, roomNode, roomView, ROOM_LIFETIME, TURN_DURATION, type Room, type RoomCommand } from "./room";
 
 const now = 1_000_000;
@@ -85,6 +86,40 @@ test("public projections expose only counts and completed pairs; each UID has on
   const lobbyNode = roomNode(table(1));
   assert.deepEqual(JSON.parse(lobbyNode.hands["uid-0"]).cards, []);
   assert.equal(JSON.parse(lobbyNode.public).game, null);
+});
+
+test("the opening gives every card time to land and blocks moves until pairing ends", () => {
+  assert.equal(dealStage(SHUFFLE_DURATION - 1), "shuffle");
+  assert.equal(dealStage(SHUFFLE_DURATION), "aside");
+  assert.equal(dealStage(DEAL_START), "deal");
+  assert.equal(dealtCardCount(DEAL_START), 0);
+  assert.equal(dealtCardCount(DEAL_START + CARD_FLIGHT_DURATION), 1);
+  assert.equal(dealtCardCount(DEAL_START + 50 * CARD_INTERVAL + CARD_FLIGHT_DURATION), 51);
+  assert.equal(dealStage(PAIR_START), "pairs");
+  assert.equal(dealStage(DEAL_DURATION), "ready");
+  const room = act(table(4), "uid-0", { action: "start" });
+  const actor = room.players.find((p) => p.id === room.game!.actor)!.uid;
+  assert.throws(() => act(room, actor, { action: "draw", slot: 0 }, now + DEAL_DURATION - 1), /still being dealt/);
+  assert.equal(act(room, actor, { action: "draw", slot: 0 }, now + DEAL_DURATION).revision, room.revision + 1);
+});
+
+test("deal order reproduces each seat's initial count and preview mapping stays private", () => {
+  for (let count = 2; count <= 6; count++) {
+    const room = act(table(count), "uid-0", { action: "start" });
+    const game = room.game!;
+    const first = game.players.findIndex((p) => p.id === game.dealStart);
+    const counts = game.players.map(() => 0);
+    for (let i = 0; i < 51; i++) counts[(first + i) % count]++;
+    assert.deepEqual(counts, game.initialCounts);
+    const node = roomNode(room);
+    assert.equal(node.selection, null);
+    assert.equal(node.drawAccess?.revision, room.revision);
+    for (const p of room.players) {
+      const own = JSON.parse(node.hands[p.uid]);
+      assert.deepEqual(own.offeredCardIds, p.id === roomView(room).game!.target ? game.drawSlots : []);
+    }
+    assert.ok(!JSON.stringify(roomView(room)).includes("offeredCardIds"));
+  }
 });
 
 for (let count = 2; count <= 6; count++) {

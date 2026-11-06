@@ -1,5 +1,21 @@
 # Multiplayer verification
 
+## Laptop layout and card interaction update — 6 November 2026
+
+This update is verified locally; the deployment evidence below describes the earlier release.
+
+- **26 tests passed**, including 500 simulated complete rounds. Added checks for mirrored draw slots, unchanged surviving-card order, the full opening timeline, accurate seat deal counts, and private preview mappings.
+- ESLint, TypeScript checks, the Firebase Functions build, and the optimized Next.js production build passed using Node 22. The system's older Node 20 cannot load this project's current CSS tooling; use the declared Node 22 runtime.
+- The Firebase emulator integration suite passed for **2, 3, 4, 5, and 6 players** with real Authentication, Database rules, and callable functions. Selection writes from other players, invalid slots, stale revisions, and extra payload fields were rejected. The owner received the chosen slot; drawing cleared it atomically. Existing privacy, concurrent joins, duplicate draws, and rematch checks passed.
+- Two separate browser sessions verified mouse hover and touch feedback. The first offered card highlighted the owner's last card. Drawing removed exactly that card and left the other cards in order. A real emulated touch preview left the turn unchanged until **Take this card** was pressed.
+- Desktop play and winner/loser layouts were inspected at **1024×600, 1280×600, 1366×650, 1440×900, and 1920×950**, including six seats and long names. Document dimensions matched the viewport; hand captions, results, and controls did not overlap. Very short windows below 550 CSS pixels retain scrolling to keep controls accessible.
+- A rematch displayed the full 10.75-second shuffle, separate face-down Jack, all 51 card flights, and pairing sequence. Counts matched each seat's actual initial deal. Results replace the playing seats and hand; winners get confetti, and the loser gets an animated Gulam Chor stamp.
+- Touch play was inspected at **390×844**. Both mobile result variants were checked at 390px and 320px widths. Reduced-motion mode hides card flights/confetti and removes the reveal animations.
+- Browser captures and local-only fixture scripts are in ignored `output/playwright/update-*` files. These fixtures target only the isolated `demo-gulam-chor` emulator.
+- Deploy **Firebase Database rules, `roomAction`, and the frontend together**: the longer deal lock and mirrored slot mapping are authoritative server changes. No production deployment was performed for this update.
+
+## Earlier release verification
+
 Verified on **6 November 2026**, using Node 22, Firebase emulators, live Firebase, and production Next.js pages in Chrome through Playwright CLI.
 
 ## Rules and backend

@@ -9,8 +9,8 @@ A nostalgic Indian courtyard, your friends, and one Jack nobody wants to keep. *
 1. Click **Come, play a round**, then **Create a room** or **Join a room**.
 2. Enter a name and choose an avatar. Share the six-character code or invite URL.
 3. Friends join from their own devices or browsers. The host starts with any number from 2 through 6.
-4. Everyone sees the shuffle and deal. One Jack is removed; 51 cards are dealt fairly and matching ranks are paired automatically.
-5. Draw from the next active anticlockwise seat. Empty hands are safe; the last Jack's holder is the Gulam Chor.
+4. Everyone sees an approximately 11-second opening: shuffle, one Jack set aside face down, 51 cards dealt one by one, then automatic pairing.
+5. Draw from the next active anticlockwise seat. Their card backs mirror their hand, with no reshuffling between turns. Hover or touch a card to highlight it for its owner; touch users confirm with **Take this card**. Empty hands win; the last Jack's holder is revealed as the Gulam Chor.
 6. The host can deal a rematch or return everyone to the lobby to change players.
 
 Reopen an invite in the same browser to restore your anonymous seat. After 60 seconds without a move, anyone in the room can request a server-selected random draw for the waiting player. Rooms expire after 24 hours without activity. Leaving the lobby transfers host duties; the host can remove seats there.
@@ -40,7 +40,7 @@ For isolated backend tests, install Java 21+, run `npm run emulators` in one ter
 
 All shuffles, deals, draws, seat changes, and results run in a callable Firebase function. Transactions reject stale revisions and out-of-turn moves. Members can read only the public table and their own private hand. Clients cannot read the deck, hidden slot mapping, other hands, owner records, or room listings, or write game state directly.
 
-Realtime listeners subscribe only to the public table and the current player's hand. Functions scale to zero, with a two-instance maximum. A bounded daily job clears expired rooms. These controls reduce cost, but Blaze billing is usage-based and cannot guarantee a zero bill.
+Realtime listeners subscribe to the public table, the current player's private hand, and transient card-selection feedback. Database rules allow only the current drawing player to publish a valid slot for that revision; a draw clears it atomically. Hover feedback does not call a Cloud Function or change hand order. Functions scale to zero, with a two-instance maximum. A bounded daily job clears expired rooms. These controls reduce cost, but Blaze billing is usage-based and cannot guarantee a zero bill.
 
 The landing and rules pages have canonical URLs, social previews, and structured game metadata. `/sitemap.xml` advertises **weekly** changes and revalidates after **604800 seconds (one week)**. `/robots.txt` permits crawling. Private play pages use `noindex,follow` and are excluded from the sitemap. Search engines decide when to crawl and index.
 

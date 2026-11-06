@@ -5,6 +5,15 @@
     "rooms": {
       ".indexOn": ["expiresAt"],
       "$code": {
+        "selection": {
+          ".read": "auth != null && root.child('rooms').child($code).child('members').child(auth.uid).val() == true && root.child('rooms').child($code).child('expiresAt').val() > now",
+          ".write": "auth != null && root.child('rooms').child($code).child('drawAccess').child('actorUid').val() == auth.uid && root.child('rooms').child($code).child('expiresAt').val() > now && root.child('rooms').child($code).child('drawAccess').child('readyAt').val() <= now",
+          ".validate": "newData.hasChildren(['revision', 'slot', 'updatedAt'])",
+          "revision": { ".validate": "newData.isNumber() && newData.val() == root.child('rooms').child($code).child('drawAccess').child('revision').val()" },
+          "slot": { ".validate": "newData.isNumber() && newData.val() % 1 == 0 && newData.val() >= 0 && newData.val() < root.child('rooms').child($code).child('drawAccess').child('slotCount').val()" },
+          "updatedAt": { ".validate": "newData.isNumber() && newData.val() >= now - 10000 && newData.val() <= now + 1000" },
+          "$other": { ".validate": false }
+        },
         "public": {
           ".read": "auth != null && root.child('rooms').child($code).child('members').child(auth.uid).val() == true && root.child('rooms').child($code).child('expiresAt').val() > now"
         },

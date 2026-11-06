@@ -1,9 +1,12 @@
 import { applyDraw, createRound, FAMILY, GameRuleError, getTarget, random, type Card, type GameState, type Pair, type PlayerId, type PublicEvent, type Random } from "./game";
+import { DEAL_DURATION } from "./deal";
+export { DEAL_DURATION } from "./deal";
 
 export type RoomPlayer = { id: PlayerId; name: string; avatar: PlayerId };
 type Member = RoomPlayer & { uid: string };
 export type PublicGame = {
   round: number; turn: number; status: "playing" | "finished";
+  dealStart?: PlayerId;
   players: { id: PlayerId; count: number; initialCount: number }[];
   actor: PlayerId | null; target: PlayerId | null; chor: PlayerId | null;
   slotCount: number; pairCount: number; lastPair: Pair | null;
@@ -13,7 +16,8 @@ export type RoomView = {
   code: string; host: PlayerId; players: RoomPlayer[]; revision: number;
   game: PublicGame | null; startedAt: number; turnDeadline: number; expiresAt: number;
 };
-export type HandView = { id: PlayerId; revision: number; cards: Card[] };
+export type HandView = { id: PlayerId; revision: number; cards: Card[]; offeredCardIds?: string[] };
+export type CardSelection = { revision: number; slot: number; updatedAt: number };
 export type Room = {
   code: string; hostUid: string; players: Member[]; revision: number; round: number;
   game: GameState | null; startedAt: number; turnDeadline: number; expiresAt: number;
@@ -21,7 +25,6 @@ export type Room = {
 export type RoomAction = "join" | "start" | "draw" | "nudge" | "leave" | "lobby" | "remove";
 export type RoomCommand = { action: RoomAction; name?: unknown; avatar?: unknown; revision?: unknown; slot?: unknown; player?: unknown };
 export const ROOM_LIFETIME = 24 * 60 * 60 * 1000;
-export const DEAL_DURATION = 3200;
 export const TURN_DURATION = 60_000;
 
 export function profile(name: unknown, avatar: unknown): Pick<RoomPlayer, "name" | "avatar"> {
@@ -84,7 +87,7 @@ export function changeRoom(current: Room, uid: string, command: RoomCommand, now
           actor: command.action === "nudge" ? room.game.actor! : member.id,
           turn: room.game.turn,
           slot: command.action === "nudge" ? Math.floor(rng() * room.game.drawSlots.length) : command.slot as number,
-        }, rng);
+        });
         room.turnDeadline = now + TURN_DURATION;
       } else throw new GameRuleError("Unknown room action.");
     }
@@ -103,6 +106,7 @@ export function roomView(room: Room): RoomView {
     revision: room.revision, startedAt: room.startedAt, turnDeadline: room.turnDeadline, expiresAt: room.expiresAt,
     game: game ? {
       round: game.round, turn: game.turn, status: game.status,
+      dealStart: game.dealStart ?? game.players[0].id,
       players: game.players.map((p, i) => ({ id: p.id, count: p.cards.length, initialCount: game.initialCounts[i] })),
       actor: game.actor, target: getTarget(game)?.id ?? null, chor: game.chor,
       slotCount: game.drawSlots.length, pairCount: game.discarded.length, lastPair: game.discarded.at(-1) ?? null,
@@ -115,9 +119,18 @@ export function roomView(room: Room): RoomView {
 
 // JSON strings preserve empty arrays/nulls, which Realtime Database otherwise removes.
 export function roomNode(room: Room) {
+  const target = room.game ? getTarget(room.game) : null;
   return {
     secret: JSON.stringify(room), public: JSON.stringify(roomView(room)), expiresAt: room.expiresAt,
     members: Object.fromEntries(room.players.map((p) => [p.uid, true])),
-    hands: Object.fromEntries(room.players.map((p) => [p.uid, JSON.stringify({ id: p.id, revision: room.revision, cards: room.game?.players.find((seat) => seat.id === p.id)?.cards ?? [] } satisfies HandView)])),
+    // Rules consult this server-owned metadata; it contains no card identities.
+    drawAccess: target ? {
+      actorUid: room.players.find((p) => p.id === room.game!.actor)!.uid,
+      revision: room.revision, slotCount: room.game!.drawSlots.length,
+      readyAt: room.startedAt + DEAL_DURATION,
+    } : null,
+    // A move atomically clears the previous turn's ephemeral selection.
+    selection: null,
+    hands: Object.fromEntries(room.players.map((p) => [p.uid, JSON.stringify({ id: p.id, revision: room.revision, cards: room.game?.players.find((seat) => seat.id === p.id)?.cards ?? [], offeredCardIds: target?.id === p.id ? room.game!.drawSlots : [] } satisfies HandView)])),
   };
 }

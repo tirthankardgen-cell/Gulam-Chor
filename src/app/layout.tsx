@@ -9,6 +9,7 @@ import "@fontsource/hind/devanagari-600.css";
 import { art } from "@/lib/art";
 import { SITE_DESCRIPTION, SITE_URL } from "@/lib/site";
 import "./globals.css";
+import "./table-experience.css";
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),

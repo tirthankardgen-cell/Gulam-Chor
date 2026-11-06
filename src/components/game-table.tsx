@@ -7,9 +7,13 @@ import { Scene } from "./scene";
 import { Icon } from "./icon";
 import { PlayingCard } from "./playing-card";
 import { Dialog } from "./dialog";
+import { DealSequence } from "./deal-sequence";
+import { RoundResult } from "./round-result";
+import { useCardSelection } from "./use-card-selection";
 import { art, hasPaintedCloth } from "@/lib/art";
-import { cardLabel, FAMILY, shuffle, type PlayerId, type PublicEvent } from "@/lib/game";
-import { DEAL_DURATION, type HandView, type RoomCommand, type RoomView } from "@/lib/room";
+import { cardLabel, FAMILY, type PlayerId, type PublicEvent } from "@/lib/game";
+import { dealStage, dealtCardCount } from "@/lib/deal";
+import { type HandView, type RoomCommand, type RoomView } from "@/lib/room";
 
 function readStorage(key: string, session = false) {
   try { return (session ? sessionStorage : localStorage).getItem(key); } catch { return null; }
@@ -66,13 +70,12 @@ export default function GameTable({ room, hand, busy, online, error, offset, act
   const game = room.game!;
   const [modal, setModal] = useState<"rules" | "settings" | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
-  const [cardOrder, setCardOrder] = useState<string[]>([]);
+  const [touchChoice, setTouchChoice] = useState<{ revision: number; slot: number } | null>(null);
   const [now, setNow] = useState(() => Date.now() + offset);
-  const [reduced] = useState(() => matchMedia("(prefers-reduced-motion: reduce)").matches);
   const { enabled: soundEnabled, toggle: toggleSound, tone } = useTableSound();
   const previousTurn = useRef(game.turn);
   useEffect(() => {
-    const timer = setInterval(() => setNow(Date.now() + offset), 250);
+    const timer = setInterval(() => setNow(Date.now() + offset), 80);
     return () => clearInterval(timer);
   }, [offset]);
   useEffect(() => {
@@ -80,7 +83,9 @@ export default function GameTable({ room, hand, busy, online, error, offset, act
     previousTurn.current = game.turn;
   }, [game.turn, game.status, game.events, tone]);
 
-  const intro = now < room.startedAt + DEAL_DURATION ? Math.min(3, Math.max(0, Math.floor((now - room.startedAt) / (DEAL_DURATION / 4)))) : -1;
+  const elapsed = now - room.startedAt;
+  const stage = dealStage(elapsed);
+  const intro = stage !== "ready";
   const myId = hand.id;
   const host = room.host === myId;
   const getProfile = (id: PlayerId) => {
@@ -89,25 +94,33 @@ export default function GameTable({ room, hand, busy, online, error, offset, act
   };
   const myIndex = game.players.findIndex((p) => p.id === myId);
   const players = [...game.players.slice(myIndex), ...game.players.slice(0, myIndex)];
-  const cards = [...hand.cards].sort((a, b) => cardOrder.indexOf(a.id) - cardOrder.indexOf(b.id));
+  const cards = hand.cards;
   const target = game.players.find((p) => p.id === game.target);
-  const yourTurn = game.actor === myId && intro < 0 && !busy && !modal;
+  const yourTurn = game.actor === myId && !intro && !busy && !modal && online;
   const safe = game.players.find((p) => p.id === myId)?.count === 0;
-  const finished = game.status === "finished";
+  const finished = game.status === "finished" && !intro;
+  const { selection, preview } = useCardSelection(room.code, room.revision, yourTurn && !finished);
+  const activeSlot = selection && now - selection.updatedAt < 6000 ? selection.slot : null;
+  const touchedCard = target?.id === myId && activeSlot !== null ? hand.offeredCardIds?.[activeSlot] ?? cards[cards.length - 1 - activeSlot]?.id : null;
+  const pendingTouch = touchChoice?.revision === room.revision ? touchChoice.slot : null;
   const lastPair = game.lastPair;
   const lastEvent = game.events.at(-1);
   const picked = selected ? cards.find((card) => card.id === selected) : null;
   const actorName = game.actor ? getProfile(game.actor).name : "";
   const targetName = target ? getProfile(target.id).name : "";
-  const finalCard = game.finalCard;
   const heading = !online ? "Reconnecting to the table…" : busy ? "The cards are moving…" : yourTurn ? "A little luck. Pick a card." : safe ? "You’re safe. Enjoy the show." : actorName + " is choosing…";
-  const introLines = ["Shuffling the old deck…", "One Jack, kept a secret.", "51 cards. " + game.players.length + " familiar faces.", game.pairCount + " pairs find their way home."];
   const nameOf = (id: PlayerId) => getProfile(id).name;
   const restart = () => { void act({ action: "start", revision: room.revision }); };
-  const draw = (slot: number) => { setSelected(null); void act({ action: "draw", revision: room.revision, slot }); };
+  const draw = (slot: number) => { preview(null); setSelected(null); setTouchChoice(null); void act({ action: "draw", revision: room.revision, slot }); };
+  const dealt = dealtCardCount(elapsed);
+  const dealFirst = Math.max(0, game.players.findIndex((p) => p.id === game.dealStart));
+  const dealtTo = (id: PlayerId) => {
+    const position = (game.players.findIndex((p) => p.id === id) - dealFirst + players.length) % players.length;
+    return Math.max(0, Math.floor((dealt + players.length - 1 - position) / players.length));
+  };
 
   return (
-    <div className="game-shell">
+    <div className={`game-shell ${finished ? "game-complete" : ""}`}>
       <Scene game />
       <header className="game-header">
         <Brand compact />
@@ -130,23 +143,23 @@ export default function GameTable({ room, hand, busy, online, error, offset, act
             <span className="table-corner corner-tl" aria-hidden="true">✥</span><span className="table-corner corner-tr" aria-hidden="true">✥</span><span className="table-corner corner-bl" aria-hidden="true">✥</span><span className="table-corner corner-br" aria-hidden="true">✥</span>
           </div>
 
-          <div className="opponents" aria-label="Players in anticlockwise seat order">
+          {!finished && <div className="opponents" aria-label="Players in anticlockwise seat order">
             {players.slice(1).map((player, index) => {
               const angle = (90 - (index + 1) * 360 / game.players.length) * Math.PI / 180;
               const profile = getProfile(player.id);
-              const isSafe = !player.count;
-              const isActor = !finished && game.actor === player.id;
-              const isTarget = !finished && game.actor === myId && target?.id === player.id;
+              const isSafe = !intro && !player.count;
+              const isActor = !intro && game.actor === player.id;
+              const isTarget = !intro && game.actor === myId && target?.id === player.id;
               return <div key={player.id} className={`player-seat ${isSafe ? "is-safe" : ""} ${isActor ? "is-actor" : ""} ${isTarget ? "is-target" : ""} ${game.chor === player.id ? "is-chor" : ""}`} style={{ "--seat-x": `${50 + Math.cos(angle) * 46}%`, "--seat-y": `${50 + Math.sin(angle) * 42}%`, "--portrait-color": profile.color } as CSSProperties} data-player={player.id}>
                 <div className="portrait-wrap"><img src={art(profile.avatar)} width="64" height="64" alt={`${profile.name}`} draggable="false" />{isSafe && <span className="safe-tick"><Icon name="check" size={13} /></span>}</div>
                 <strong>{profile.name}</strong>
-                <span className="player-count">{isSafe ? <>Safe<span className="safe-seat-extra"> · Chai time</span></> : game.chor === player.id ? "Gulam Chor" : `${player.count} ${player.count === 1 ? "card" : "cards"}`}</span>
+                <span className="player-count">{intro ? stage === "pairs" ? `${player.count} cards kept` : `${dealtTo(player.id)} / ${player.initialCount} dealt` : isSafe ? <>Safe<span className="safe-seat-extra"> · Chai time</span></> : `${player.count} ${player.count === 1 ? "card" : "cards"}`}</span>
                 {isActor && <small className="seat-caption">CHOOSING</small>}{isTarget && <small className="seat-caption">ON YOUR LEFT</small>}
               </div>;
             })}
-          </div>
+          </div>}
 
-          {!finished && <>
+          {!finished && !intro && <>
             <div className="discard-tray" aria-label={`${game.pairCount} pairs discarded`}>
               <div className="mini-pair">{lastPair?.map((card) => <PlayingCard key={card.id} card={card} />)}</div>
               <span><b>{game.pairCount}</b> pairs away</span>
@@ -157,52 +170,33 @@ export default function GameTable({ room, hand, busy, online, error, offset, act
               <h2>{heading}</h2>
               <p className="draw-source">{yourTurn ? `Draw from ${targetName}’s hand · your left neighbour` : `${actorName} ${game.actor === myId ? "draw" : "draws"} from ${target?.id === myId ? "your hand" : `${targetName}’s hand`}`}</p>
               <div className="draw-fan" style={{ "--count": game.slotCount } as CSSProperties}>
-                {Array.from({ length: game.slotCount }, (_, index) => <button key={`${game.turn}-${index}`} className="draw-card" style={{ "--index": index, "--angle": `${(index - (game.slotCount - 1) / 2) * 3}deg`, "--lift": `${Math.abs(index - (game.slotCount - 1) / 2) * 2.4}px` } as CSSProperties} disabled={!yourTurn} onClick={() => draw(index)} aria-label={`Draw card ${index + 1} of ${game.slotCount} from ${targetName}`}>
+                {Array.from({ length: game.slotCount }, (_, index) => <button key={`${game.turn}-${index}`} className={`draw-card ${activeSlot === index || pendingTouch === index ? "card-previewed" : ""}`} style={{ "--index": index, "--angle": `${(index - (game.slotCount - 1) / 2) * 3}deg`, "--lift": `${Math.abs(index - (game.slotCount - 1) / 2) * 2.4}px` } as CSSProperties} disabled={!yourTurn}
+                  onPointerEnter={(event) => { if (event.pointerType !== "touch") preview(index); }} onPointerLeave={(event) => { if (event.pointerType !== "touch") preview(null); }}
+                  onPointerDown={(event) => { if (event.pointerType === "touch") { setTouchChoice({ revision: room.revision, slot: index }); preview(index); } }} onPointerCancel={() => { setTouchChoice(null); preview(null); }}
+                  onFocus={() => preview(index)} onBlur={() => preview(null)} onClick={(event) => { if (event.detail === 0 || (event.nativeEvent as PointerEvent).pointerType !== "touch") draw(index); }} aria-label={`Draw card ${index + 1} of ${game.slotCount} from ${targetName}`}>
                   <PlayingCard back />
                 </button>)}
               </div>
-              <p className="draw-hint">{yourTurn ? "Choose any card. Even the suspicious one." : safe ? "Your family is still playing. The Jack has a journey left." : "A straight face tells you nothing."}</p>
-              {intro < 0 && now >= room.turnDeadline && <button className="cream-button nudge-button" disabled={busy} onClick={() => void act({ action: "nudge", revision: room.revision })}>Draw randomly for {actorName}</button>}
+              {yourTurn && pendingTouch !== null ? <button className="cream-button take-card-button" onClick={() => draw(pendingTouch)}>Take this card</button> : <p className="draw-hint">{yourTurn ? "Their hand, viewed from the back. Hover or touch to choose." : target?.id === myId ? `${actorName} can see only the backs. Watch for a highlighted card below.` : safe ? "Your friends are still playing. The Jack has a journey left." : "A straight face tells you nothing."}</p>}
+              {now >= room.turnDeadline && pendingTouch === null && <button className="cream-button nudge-button" disabled={busy || !online} onClick={() => void act({ action: "nudge", revision: room.revision })}>Draw randomly for {actorName}</button>}
             </section>
             <div className="table-counter"><span>{game.players.reduce((sum, p) => sum + p.count, 0)} cards left</span><i>✦</i><span>TURN {String(game.turn).padStart(2, "0")}</span></div>
           </>}
 
-          {finished && <section className="round-result" aria-labelledby="result-title">
-            <p className="result-hindi" lang="hi">{game.chor === myId ? "पकड़े गए!" : "बच गए!"}</p>
-            <h2 id="result-title">{game.chor === myId ? "You are" : `${getProfile(game.chor!).name} is`} the Gulam Chor!</h2>
-            <p>The last Jack found a home. There’s always another round.</p>
-            <div className="result-cards">
-              <div role="img" aria-label={`Last Jack: ${cardLabel(finalCard!)}`}><PlayingCard card={finalCard!} /><small>The last Jack</small></div>
-              <span aria-hidden="true">✦</span>
-              <div role="img" aria-label={`Removed Jack: ${cardLabel(game.removedJack!)}`}><PlayingCard card={game.removedJack!} /><small>The one set aside</small></div>
-            </div>
-            <p className="safe-list"><Icon name="leaf" size={17} /> Safe: {game.safeOrder.map((id) => getProfile(id).name).join(" · ")}</p>
-            {host ? <button className="cream-button" disabled={busy} onClick={restart}><Icon name="restart" size={18} /> One more round</button> : <p>Waiting for the host to deal again…</p>}
-          </section>}
-
-          {intro >= 0 && <div className="dealing-overlay" role="status" aria-live="polite">
-            {!reduced && intro === 2 && players.map((player, index) => {
-              const angle = (90 - index * 360 / game.players.length) * Math.PI / 180;
-              return <span key={player.id} className="deal-flight" aria-hidden="true" style={{ "--fly-x": `${Math.cos(angle) * 135}px`, "--fly-y": `${Math.sin(angle) * 110}px`, "--fly-delay": `${index * 35}ms` } as CSSProperties}><PlayingCard back /></span>;
-            })}
-            <div className="dealing-deck"><PlayingCard back /><PlayingCard back /><PlayingCard back /></div>
-            <span lang="hi">चलो, शुरू करें</span>
-            <h2>{introLines[intro]}</h2>
-            <div className="deal-dots" aria-hidden="true">{[0, 1, 2, 3].map((i) => <i key={i} className={i <= intro ? "done" : ""} />)}</div>
-            <p className="deal-explanation">{intro === 2 ? game.players.find((p) => p.id === myId)?.initialCount + " cards dealt to you" : "Everyone sees the same shuffle and deal."}</p>
-          </div>}
+          {finished && <RoundResult room={room} myId={myId} busy={busy || !online} restart={restart} />}
+          {intro && <DealSequence game={game} myId={myId} elapsed={elapsed} />}
         </div>
 
-        <section className={`your-hand ${safe ? "hand-safe" : ""}`} aria-label="Your hand">
-          <div className="hand-heading"><div><img src={art(getProfile(myId).avatar)} alt="" width="35" height="35" /><span><b>{getProfile(myId).name} · YOU</b><small>{safe ? "Safe & sipping chai" : `${cards.length} cards in hand`}</small></span></div>
-            {!safe && !finished && <button className="text-button" onClick={() => { setCardOrder(shuffle(cards.map((card) => card.id))); setSelected(null); tone("draw"); }} disabled={intro >= 0 || busy}><Icon name="shuffle" size={16} /> Shuffle hand</button>}
+        {!finished && <section className={`your-hand ${safe ? "hand-safe" : ""} ${intro ? "hand-dealing" : ""}`} aria-label="Your hand">
+          <div className="hand-heading"><div><img src={art(getProfile(myId).avatar)} alt="" width="35" height="35" /><span><b>{getProfile(myId).name} · YOU</b><small>{intro ? `${dealtTo(myId)} cards dealt to you` : safe ? "Safe & sipping chai" : `${cards.length} cards in hand`}</small></span></div>
+            <span className="hand-order-note">{intro ? "Your cards are on their way" : "Your hand stays in this order"}</span>
           </div>
-          {safe ? <div className="safe-hand-note"><Icon name="cup" size={28} /><p>Your cards are gone. Your chai is waiting.</p></div> : <div className="hand-scroll"><div className="hand-fan" style={{ "--count": cards.length } as CSSProperties}>
-            {cards.map((card, index) => <button key={card.id} className={`own-card ${selected === card.id ? "card-selected" : ""}`} style={{ "--index": index, "--angle": `${(index - (cards.length - 1) / 2) * 2}deg`, "--lift": `${Math.abs(index - (cards.length - 1) / 2) * 2}px` } as CSSProperties} aria-label={cardLabel(card)} aria-pressed={selected === card.id} onClick={() => setSelected(selected === card.id ? null : card.id)}><PlayingCard card={card} /></button>)}
+          {intro ? <div className="hand-deal-note"><PlayingCard back /><span>{stage === "pairs" ? `${cards.length} cards kept after pairing` : `${dealtTo(myId)} / ${game.players.find((p) => p.id === myId)?.initialCount} cards received`}</span></div> : safe ? <div className="safe-hand-note"><Icon name="cup" size={28} /><p>Your cards are gone. Your chai is waiting.</p></div> : <div className="hand-scroll"><div className="hand-fan" style={{ "--count": cards.length } as CSSProperties}>
+            {cards.map((card, index) => <button key={card.id} className={`own-card ${selected === card.id ? "card-selected" : ""} ${touchedCard === card.id ? "card-touched" : ""}`} style={{ "--index": index, "--angle": `${(index - (cards.length - 1) / 2) * 2}deg`, "--lift": `${Math.abs(index - (cards.length - 1) / 2)}px` } as CSSProperties} data-card-id={card.id} aria-label={`${cardLabel(card)}${touchedCard === card.id ? `, ${actorName} is touching this card` : ""}`} aria-pressed={selected === card.id} onClick={() => setSelected(selected === card.id ? null : card.id)}><PlayingCard card={card} />{touchedCard === card.id && <span className="touch-marker" aria-hidden="true">CHOOSING</span>}</button>)}
           </div></div>}
-          <p className="hand-caption">{picked ? cardLabel(picked) : !safe && !finished ? "Same rank makes a pair. Suits don’t matter." : "A little luck. A lot of apne."}</p>
-        </section>
-        <p className={`table-event ${error ? "event-error" : ""}`} role="status" aria-live="polite" aria-atomic="true">{error || (!online ? "Reconnecting… Your seat is saved. Moves resume when the connection returns." : finished ? `${game.chor === myId ? "You are" : `${getProfile(game.chor!).name} is`} the Gulam Chor. All 25 pairs are home.` : eventText(lastEvent, nameOf))}</p>
+          <p className="hand-caption">{intro ? "Pairs will be put away before the first turn." : touchedCard ? `${actorName} is touching your ${cardLabel(cards.find((card) => card.id === touchedCard)!)}.` : picked ? cardLabel(picked) : !safe ? "Same rank makes a pair. Suits don’t matter." : "A little luck. A lot of apne."}</p>
+        </section>}
+        <p className={`table-event ${error ? "event-error" : ""}`} role="status" aria-live="polite" aria-atomic="true">{error || (!online ? "Reconnecting… Your seat is saved. Moves resume when the connection returns." : finished ? `${game.chor === myId ? "You are" : `${getProfile(game.chor!).name} is`} the Gulam Chor. All 25 pairs are home.` : intro ? "The whole table is getting ready…" : eventText(lastEvent, nameOf))}</p>
       </main>
       <footer className="game-footer"><Link href="/"><Icon name="back" size={14} /> Back to the courtyard</Link><span>{online ? "LIVE" : "RECONNECTING"} · {game.players.length} FRIENDS</span><span className="footer-hindi" lang="hi">पत्ते कम, यादें ज़्यादा।</span></footer>
 

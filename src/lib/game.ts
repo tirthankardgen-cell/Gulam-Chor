@@ -36,6 +36,7 @@ export type GameState = {
   round: number;
   players: Player[];
   initialCounts: number[];
+  dealStart?: PlayerId;
   removedJack: Card;
   discarded: Pair[];
   safeOrder: PlayerId[];
@@ -132,13 +133,13 @@ export function createRound(count = 4, rng: Random = random, round = 1): GameSta
   const finished = active.length === 1;
   const actor = finished ? null : active[Math.floor(rng() * active.length)].id;
   const state: GameState = {
-    schema: 1, round, players, initialCounts, removedJack, discarded,
+    schema: 1, round, players, initialCounts, dealStart: dealtPlayers[0].id, removedJack, discarded,
     safeOrder: players.filter((player) => !player.cards.length).map((player) => player.id),
     status: finished ? "finished" : "playing",
     actor, chor: finished ? active[0].id : null,
     turn: 1, drawSlots: [], events: [], lastDraw: null,
   };
-  if (actor) state.drawSlots = shuffle(nextActivePlayer(players, actor).cards.map((card) => card.id), rng);
+  if (actor) state.drawSlots = nextActivePlayer(players, actor).cards.map((card) => card.id).reverse();
   assertIntegrity(state);
   return state;
 }
@@ -146,7 +147,6 @@ export function createRound(count = 4, rng: Random = random, round = 1): GameSta
 export function applyDraw(
   state: GameState,
   move: { actor: PlayerId; turn: number; slot: number },
-  rng: Random = random,
 ): GameState {
   if (state.status !== "playing") throw new GameRuleError("This round has already finished.");
   if (move.turn !== state.turn) throw new GameRuleError("That turn has already passed.");
@@ -178,16 +178,14 @@ export function applyDraw(
     actor: nextActor,
     chor: finished ? active[0].id : null,
     turn: state.turn + 1,
-    drawSlots: nextActor ? shuffle(nextActivePlayer(players, nextActor).cards.map((item) => item.id), rng) : [],
+    // Looking at the back of someone's hand mirrors their left-to-right order.
+    // Removing a card closes that gap; surviving cards never change order.
+    drawSlots: nextActor ? nextActivePlayer(players, nextActor).cards.map((item) => item.id).reverse() : [],
     events: [...state.events, { turn: state.turn, actor: actor.id, target: target.id, pairRank: pair ? card.rank : null, safe }].slice(-6),
     lastDraw: { actor: actor.id, card, paired: !!pair },
   };
   assertIntegrity(next);
   return next;
-}
-
-export function shuffleHand(state: GameState, id: PlayerId, rng: Random = random): GameState {
-  return { ...state, players: state.players.map((player) => player.id === id ? { ...player, cards: shuffle(player.cards, rng) } : player) };
 }
 
 export function assertIntegrity(state: GameState): void {

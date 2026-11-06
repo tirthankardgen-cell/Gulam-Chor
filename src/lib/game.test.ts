@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import {
   applyDraw, assertIntegrity, createRound, getTarget, makeDeck, nextActivePlayer,
-  removePairs, remainingCards, restoreRound, shuffleHand, type Card, type Player, type Random,
+  removePairs, remainingCards, restoreRound, type Card, type Player, type Random,
 } from "./game";
 
 function seeded(seed: number): Random {
@@ -61,7 +61,7 @@ for (let count = 2; count <= 6; count++) {
         const oldState = state;
         const target = getTarget(state)!;
         assert.equal(state.drawSlots.length, target.cards.length);
-        state = applyDraw(state, { actor: state.actor!, turn: state.turn, slot: Math.floor(rng() * state.drawSlots.length) }, rng);
+        state = applyDraw(state, { actor: state.actor!, turn: state.turn, slot: Math.floor(rng() * state.drawSlots.length) });
         assert.equal(JSON.stringify(oldState), oldJson, "moves must not mutate previous snapshots");
         assert.equal(oldCount - remainingCards(state), state.lastDraw?.paired ? 2 : 0);
         assert.ok(++moves < 5000, "a seeded simulation failed to finish");
@@ -82,7 +82,7 @@ test("invalid seat counts, out-of-turn moves, invalid slots, and duplicate turns
   const other = state.players.find((player) => player.id !== actor)!.id;
   assert.throws(() => applyDraw(state, { actor: other, turn: state.turn, slot: 0 }));
   for (const slot of [-1, 0.5, state.drawSlots.length, NaN]) assert.throws(() => applyDraw(state, { actor, turn: state.turn, slot }));
-  const moved = applyDraw(state, { actor, turn: state.turn, slot: 0 }, seeded(2));
+  const moved = applyDraw(state, { actor, turn: state.turn, slot: 0 });
   assert.throws(() => applyDraw(moved, { actor, turn: state.turn, slot: 0 }));
 });
 
@@ -97,14 +97,23 @@ test("a round already reduced to one Jack during dealing finishes without a phan
   assert.throws(() => applyDraw(state, { actor: "you", turn: 1, slot: 0 }));
 });
 
-test("shuffling a hand preserves fixed blind-draw slots and every card", () => {
-  const state = createRound(6, seeded(102));
-  const target = getTarget(state)!;
-  const shuffled = shuffleHand(state, target.id, seeded(3));
-  assert.deepEqual(shuffled.drawSlots, state.drawSlots);
-  assertIntegrity(shuffled);
-  const draw = { actor: state.actor!, turn: state.turn, slot: 0 };
-  assert.deepEqual(applyDraw(shuffled, draw, seeded(9)).lastDraw, applyDraw(state, draw, seeded(9)).lastDraw);
+test("draw slots mirror the owner's hand and surviving cards retain their order", () => {
+  const rng = seeded(102);
+  let state = createRound(6, rng);
+  while (state.status === "playing") {
+    const target = getTarget(state)!;
+    assert.deepEqual(state.drawSlots, target.cards.map((card) => card.id).reverse());
+    const slot = Math.floor(rng() * target.cards.length);
+    const expected = target.cards[target.cards.length - 1 - slot];
+    const before = state;
+    state = applyDraw(state, { actor: state.actor!, turn: state.turn, slot });
+    assert.equal(state.lastDraw!.card.id, expected.id);
+    for (const player of state.players) {
+      const old = before.players.find((p) => p.id === player.id)!.cards;
+      assert.deepEqual(player.cards.filter((card) => old.some((c) => c.id === card.id)),
+        old.filter((card) => player.cards.some((c) => c.id === card.id)));
+    }
+  }
 });
 
 test("refresh restoration accepts intact rounds and rejects damaged saves", () => {
@@ -121,9 +130,10 @@ test("refresh restoration accepts intact rounds and rejects damaged saves", () =
 });
 
 test("public move events contain no unpaired card face or private slot mapping", () => {
+  const rng = seeded(501);
   let state = createRound(5, seeded(501));
-  while (state.status === "playing") {
-    state = applyDraw(state, { actor: state.actor!, turn: state.turn, slot: 0 }, seeded(state.turn));
+  for (let moves = 0; moves < 100 && state.status === "playing"; moves++) {
+    state = applyDraw(state, { actor: state.actor!, turn: state.turn, slot: Math.floor(rng() * state.drawSlots.length) });
     const event = state.events.at(-1)!;
     assert.deepEqual(Object.keys(event).sort(), ["actor", "pairRank", "safe", "target", "turn"]);
     if (!state.lastDraw?.paired) assert.equal(event.pairRank, null);
