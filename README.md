@@ -48,7 +48,9 @@ The image inventory refreshes automatically before development and production bu
 
 ## Artwork and project notes
 
-The Indian courtyard design, responsive table, keyboard controls, optional synthesized sounds, and reduced-motion support are preserved. Avatars are independent of seat order. Fonts are bundled locally.
+The Indian courtyard design, responsive table, keyboard controls, and reduced-motion support are preserved. Avatars are independent of seat order. Fonts are bundled locally.
+
+The courtyard now has a looping sitar soundtrack, recorded shuffle/deal/card sounds, and distinct cues for choices, turns, pairs, safe hands, wins, and losses. Audio starts after the first interaction. Use the speaker to mute, or the music note for separate music/effects volumes and credits. Preferences are saved and background tabs go quiet. See [music, sound coverage, and licenses](docs/AUDIO.md).
 
 - [Artwork handoff](art-direction/README.md): 15 prompts, image slots, and SVG fallbacks. Save paintings under `public/art/generated/` and run `npm run art:sync`.
 - [Verification](docs/VERIFICATION.md): current checks and deployment evidence.

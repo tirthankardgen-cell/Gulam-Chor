@@ -11,7 +11,7 @@
     "start": "next start",
     "lint": "eslint . --max-warnings=0",
     "typecheck": "tsc --noEmit",
-    "test": "tsx --test src/lib/game.test.ts src/lib/room.test.ts",
+    "test": "tsx --test src/lib/game.test.ts src/lib/room.test.ts src/lib/audio.test.ts",
     "test:integration": "node scripts/test-multiplayer.mjs",
     "emulators": "npm --prefix functions run build && firebase emulators:start --project demo-gulam-chor --only auth,database,functions",
     "art:sync": "node scripts/sync-art.mjs",

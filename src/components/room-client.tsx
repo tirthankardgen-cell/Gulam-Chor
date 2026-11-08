@@ -6,6 +6,8 @@ import { onValue, ref } from "firebase/database";
 import { Brand } from "./brand";
 import { Scene } from "./scene";
 import { Icon } from "./icon";
+import { AudioControls } from "./audio-controls";
+import { useAudio } from "./audio-provider";
 import GameTable from "./game-table";
 import { art } from "@/lib/art";
 import { FAMILY, type PlayerId } from "@/lib/game";
@@ -24,6 +26,7 @@ function codeFrom(value: string) {
 }
 
 export default function RoomClient() {
+  const { play } = useAudio();
   const [initial] = useState(savedProfile);
   const [name, setName] = useState(initial.name);
   const [avatar, setAvatar] = useState<PlayerId>(initial.avatar);
@@ -42,6 +45,14 @@ export default function RoomClient() {
   const [retry, setRetry] = useState(0);
   const actionLock = useRef(false);
   const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const previousRoom = useRef<{ code: string; count: number } | null>(null);
+
+  useEffect(() => {
+    const before = previousRoom.current;
+    if (room && before?.code === room.code && before.count !== room.players.length) play(room.players.length > before.count ? "join" : "leave");
+    previousRoom.current = room ? { code: room.code, count: room.players.length } : null;
+  }, [room, play]);
+  useEffect(() => { if (error) play("error"); }, [error, play]);
 
   useEffect(() => {
     let cancelled = false;
@@ -112,6 +123,7 @@ export default function RoomClient() {
       const result = await roomAction(mode === "create" ? { action: "create", name, avatar } : { action: "join", code: codeFrom(code), name, avatar });
       try { localStorage.setItem("gulam-profile", JSON.stringify({ name: name.trim(), avatar })); } catch { /* Storage is optional. */ }
       setActiveCode(result.code); setCode(result.code);
+      play("join");
       history.replaceState(null, "", `/play?room=${result.code}`);
     } catch (e) { setError(connectionError(e)); }
     finally { actionLock.current = false; setBusy(false); }
@@ -123,17 +135,19 @@ export default function RoomClient() {
     try {
       await roomAction({ ...command, code: activeCode });
       if (command.action === "leave") {
+        play("leave");
         setActiveCode(""); setTable(null); setMode("choose"); setCode("");
         history.replaceState(null, "", "/play");
       }
     } catch (e) { setError(connectionError(e)); }
     finally { actionLock.current = false; setBusy(false); }
-  }, [activeCode]);
+  }, [activeCode, play]);
 
   async function copyInvite(link: boolean) {
     try {
       await navigator.clipboard.writeText(link ? `${location.origin}/play?room=${activeCode}` : activeCode);
       setCopied(link ? "Link copied!" : "Code copied!");
+      play("confirm");
       if (copyTimer.current) clearTimeout(copyTimer.current);
       copyTimer.current = setTimeout(() => setCopied(""), 2500);
     } catch { setCopied("Select and copy the room code or invite link below."); }
@@ -145,7 +159,7 @@ export default function RoomClient() {
 
   return <div className="room-shell">
     <Scene game />
-    <header className="game-header"><Brand compact /><Link className="text-button" href="/"><Icon name="back" size={16} /> Courtyard</Link></header>
+    <header className="game-header"><Brand compact /><div className="table-tools"><AudioControls /><Link className="text-button" href="/"><Icon name="back" size={16} /> Courtyard</Link></div></header>
     <main id="main" className="room-main">
       <section className="room-paper" aria-labelledby="room-title">
         <span className="room-flower" aria-hidden="true">✺</span>

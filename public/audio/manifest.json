@@ -1,0 +1,164 @@
+[
+  {
+    "file": "aside.wav",
+    "bytes": 26924,
+    "seconds": 0.42,
+    "sampleRate": 32000,
+    "channels": 1,
+    "peak": 0.62,
+    "sha256": "b54e23363d1b9a954174f0d0d4a1be9d42ad1aa4064320ac1d98839bbb83c7ae"
+  },
+  {
+    "file": "choose.wav",
+    "bytes": 6764,
+    "seconds": 0.105,
+    "sampleRate": 32000,
+    "channels": 1,
+    "peak": 0.32,
+    "sha256": "5890585121e009f10b456c2b4af6e934f9c27149f6ccdeda0423ffea42c24db1"
+  },
+  {
+    "file": "confirm.wav",
+    "bytes": 35562,
+    "seconds": 0.555,
+    "sampleRate": 32000,
+    "channels": 1,
+    "peak": 0.3192,
+    "sha256": "5c6036bf77117a46b93e575d0f3fe359530ceef691ce4a4672c6e2cf413e7026"
+  },
+  {
+    "file": "courtyard-jalandhar.mp3",
+    "bytes": 1518518,
+    "seconds": 94.815,
+    "sampleRate": 32000,
+    "channels": 2,
+    "peak": 0.6476,
+    "sha256": "4f6d147d730527d9cef09b21d467fe1c1b4ab2bde06735a6029e6f20421e4298"
+  },
+  {
+    "file": "deal-1.wav",
+    "bytes": 10284,
+    "seconds": 0.16,
+    "sampleRate": 32000,
+    "channels": 1,
+    "peak": 0.48,
+    "sha256": "17a49a9f7cab2edb53e0473e490125e316872a5643c747e6aaa7db8927c544ee"
+  },
+  {
+    "file": "deal-2.wav",
+    "bytes": 10284,
+    "seconds": 0.16,
+    "sampleRate": 32000,
+    "channels": 1,
+    "peak": 0.48,
+    "sha256": "d71862aeac7291ba0d4df523feabbbc7d430cb822936ecf9929bc33b6dce24fc"
+  },
+  {
+    "file": "deal-3.wav",
+    "bytes": 10284,
+    "seconds": 0.16,
+    "sampleRate": 32000,
+    "channels": 1,
+    "peak": 0.48,
+    "sha256": "d16a4a59bca26573d0b4353e1c1fdb66bc6ead061cf043074bd0a2b20e4ee5ba"
+  },
+  {
+    "file": "draw.wav",
+    "bytes": 9030,
+    "seconds": 0.14,
+    "sampleRate": 32000,
+    "channels": 1,
+    "peak": 0.58,
+    "sha256": "107697d4ee48ce3e6d069af41099c142d82a8c8f4123038634afd04de7bcf0ac"
+  },
+  {
+    "file": "error.wav",
+    "bytes": 42924,
+    "seconds": 0.67,
+    "sampleRate": 32000,
+    "channels": 1,
+    "peak": 0.2958,
+    "sha256": "9c33d4e9b48102ca00f325735276169d6c6389041114c66aa2090c0fc578254d"
+  },
+  {
+    "file": "join.wav",
+    "bytes": 49964,
+    "seconds": 0.78,
+    "sampleRate": 32000,
+    "channels": 1,
+    "peak": 0.3448,
+    "sha256": "6d6f6efbf8b58fbb23bae02c080af52287cfcc6167539a5ef26342507aa1db44"
+  },
+  {
+    "file": "leave.wav",
+    "bytes": 42924,
+    "seconds": 0.67,
+    "sampleRate": 32000,
+    "channels": 1,
+    "peak": 0.2403,
+    "sha256": "f4bc8f32d12df086da28874d52e95de3fff47d16a03c54e7f56872a2482e7005"
+  },
+  {
+    "file": "lose.wav",
+    "bytes": 105004,
+    "seconds": 1.64,
+    "sampleRate": 32000,
+    "channels": 1,
+    "peak": 0.3701,
+    "sha256": "82bcd14a57deb9a1ffae8cd6d6306bd508ad205ef803bdf017965f4cb0cce098"
+  },
+  {
+    "file": "pair.wav",
+    "bytes": 53804,
+    "seconds": 0.84,
+    "sampleRate": 32000,
+    "channels": 1,
+    "peak": 0.6133,
+    "sha256": "a8b8f184d335330de8abafe65c90f4e4934270215dc14633e71cd24b87b23ec3"
+  },
+  {
+    "file": "safe.wav",
+    "bytes": 73004,
+    "seconds": 1.14,
+    "sampleRate": 32000,
+    "channels": 1,
+    "peak": 0.4082,
+    "sha256": "16678f9a504d240fd822129ed42d9cdaa46b0f04a32bb8ad995782db1af1d76c"
+  },
+  {
+    "file": "shuffle.wav",
+    "bytes": 189342,
+    "seconds": 2.958,
+    "sampleRate": 32000,
+    "channels": 1,
+    "peak": 0.62,
+    "sha256": "dcdeb925e8334fb43152a2f0583842227bf148aa52828e8a00759fe43330b16c"
+  },
+  {
+    "file": "tap.wav",
+    "bytes": 10284,
+    "seconds": 0.16,
+    "sampleRate": 32000,
+    "channels": 1,
+    "peak": 0.1765,
+    "sha256": "5bf4c0c660d25fce0be560c90efea21226e34a6a33fb6af5c3b8e1d522077ade"
+  },
+  {
+    "file": "turn.wav",
+    "bytes": 55084,
+    "seconds": 0.86,
+    "sampleRate": 32000,
+    "channels": 1,
+    "peak": 0.2955,
+    "sha256": "5c7b80d8fd1c35b504738415b0e92b070d9fe3880b8c811f05fed468bfcf144b"
+  },
+  {
+    "file": "win.wav",
+    "bytes": 126764,
+    "seconds": 1.98,
+    "sampleRate": 32000,
+    "channels": 1,
+    "peak": 0.4581,
+    "sha256": "63d99878cd42e12be1d223addec4caac724f54a47e55192dabc3aa093d29930d"
+  }
+]

@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Brand } from "@/components/brand";
 import { Icon } from "@/components/icon";
 import { Scene } from "@/components/scene";
+import { AudioControls } from "@/components/audio-controls";
 import { SITE_DESCRIPTION, SITE_URL } from "@/lib/site";
 import { SHARE_IMAGE } from "@/lib/seo";
 
@@ -16,6 +17,7 @@ export default function Home() {
       <header className="landing-header">
         <Brand />
         <span className="evening-note"><span className="sun-mark">✺</span> SOMEWHERE BETWEEN CHAI &amp; ONE MORE ROUND</span>
+        <AudioControls />
       </header>
       <main id="main" className="hero-content">
         <div className="hero-eyebrow"><span /> THE GREAT INDIAN FAMILY GAME <span /></div>

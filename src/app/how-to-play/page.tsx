@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Brand } from "@/components/brand";
 import { Scene } from "@/components/scene";
+import { AudioControls } from "@/components/audio-controls";
 import { pageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = pageMetadata(
@@ -13,7 +14,7 @@ export const metadata: Metadata = pageMetadata(
 export default function HowToPlay() {
   return <div className="room-shell">
     <Scene game />
-    <header className="game-header"><Brand compact /><Link className="text-button" href="/">Courtyard</Link></header>
+    <header className="game-header"><Brand compact /><div className="table-tools"><AudioControls /><Link className="text-button" href="/">Courtyard</Link></div></header>
     <main id="main" className="room-main"><article className="room-paper rules-page">
       <p className="room-eyebrow">THE GREAT INDIAN FAMILY GAME</p>
       <h1>How to play Gulam Chor</h1>

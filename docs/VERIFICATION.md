@@ -1,5 +1,18 @@
 # Multiplayer verification
 
+## Music and sound update — 8 November 2026
+
+Verified locally. This update has not been deployed to production.
+
+- **32 tests passed**, including the existing game/room simulations and new audio checks for all 51 deal times, late activation, duplicate snapshots, independent settings, per-player outcomes, and the shipped asset hashes. ESLint, TypeScript, the Functions build, and the optimized Next.js production build passed with Node 22.
+- All **18 bundled files (2.38 MB)** decoded in the browser. A real Web Audio analyser measured nonzero music output. No AudioContext or audio playback was created before the first interaction; one music player persists across client navigation.
+- Browser controls passed: first-click enable, master mute/unmute, independent channel volumes including zero, saved settings after reload, keyboard range controls, Escape dismissal, and focus restoration. The sound dialog was visually checked at **1440×900, 390×844, and 320×844** without overflow.
+- Three separate browser contexts completed a **15-draw round** against the isolated Firebase emulators. Every player received exactly **51 scheduled card-deal sounds**, plus shuffle, set-aside, and pairing cues. Mouse hover, keyboard drawing, and an emulated touch preview/confirmation worked. A safe-hand cue played; the two winners each received `win.wav` once and the loser received `lose.wav` once. All three contexts reported zero page/audio exceptions.
+- A result refresh did not replay the old result. Starting another round retained the existing music player. Headless backgrounding was simulated with a visibility-change event: the real AudioContext suspended, queued effects were cancelled, and the music resumed at its saved position with one active loop. No missed deal, pairing, or turn cues replayed; card-selection audio still worked afterward.
+- Separate browser checks aborted every audio download, then tested with AudioContext unavailable. Both could create and leave an emulated room without page exceptions. Temporary test rooms were closed after verification.
+- The MP3's decoded loop boundary step was **0.025**, below the track's ordinary 99th-percentile sample step of **0.102**. The loop contains a phrase crossfade with gapless length metadata; the asset manifest confirms no clipped files.
+- Credits and adaptation details are in `public/audio/CREDITS.md`, the included Kenney license, and the in-game sound panel. See [audio coverage and regeneration](AUDIO.md). Browser probes, screenshots, and scripts are in ignored `output/playwright/audio-*` files. Touch checks use browser emulation; physical iOS/Safari devices were not tested.
+
 ## SEO, sitemap, and sharing update — 7 November 2026
 
 - The optimized Next.js build, ESLint, and TypeScript checks passed with Node 22.
